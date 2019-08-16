@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block navbar %}
+<ul class="list-unstyled components">
+        <p>Time Series Prediction</p>
+        <li >
+            <a href="home" aria-expanded="false">Home</a>
+        </li>
+        <li class="active">
+            <a href="jobs" aria-expanded="false">Pending Jobs</a>
+        </li>
+        <li>
+            <a href="results" aria-expanded="false">Results</a>
+        </li>
+        <li>
+            <a href="datasets" aria-expanded="false">DataSets</a>
+        </li>
+    </ul>
+{% endblock %}
+{% block content %}
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+
+            <button type="button" id="sidebarCollapse" class="btn btn-info">
+                <i class="fas fa-align-left"></i>
+                <span>Toggle Sidebar</span>
+            </button>
+            <button class="btn btn-dark d-inline-block d-lg-none ml-auto" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <i class="fas fa-align-justify"></i>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="nav navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="home">Page</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <h2>You have {{njobs}} pending jobs for processing</h2>
+    <br>
+    <div class="card-deck">
+    {% for item in job_data[0:6] %}
+                
+                <div class="card" style="width: 18rem;">
+                        <div class="card-body">
+                          <h5 class="card-title">{{ item["title"] }}</h5>
+                          <h6 class="card-subtitle mb-2 text-muted">Card subtitle</h6>
+                          <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+                          <a href="#" class="card-link">Card link</a>
+                          
+                        </div>
+                </div>
+                <br>
+
+
+    {% endfor %}
+</div>
+<br>
+<div class="card-deck">
+        {% for item in job_data[6:] %}
+                    
+                    <div class="card" style="width: 18rem;">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ item["title"] }}</h5>
+                                <h6 class="card-subtitle mb-2 text-muted">Card subtitle</h6>
+                                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+                                <a href="#" class="card-link">Card link</a>
+                                
+                            </div>
+                    </div>
+    
+    
+        {% endfor %}
+    </div>
+        
+    
+</div>
+    
+{% endblock %}
