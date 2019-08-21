@@ -37,15 +37,24 @@ if __name__ == "__main__":
     df.index = pd.to_datetime(df.index)
     series = df[args.column]
     ts = TimeSeries(series, args.frequency, train_test_split=args.test_split)
+
+    # Calculate statistics
+    ts.calculate_statistcs()
+
+    # Train and select models
     ts.train_models()
 
-    data = ts.trained_models
+    data = ts.experiment_results
     data["meta"]["CLI_args"] = {
         "table": args.table,
         "column": args.column,
         "frequency": args.frequency,
         "test_split": args.test_split,
     }
+    # Convert Models To String
+    for k in data["models"]:
+        data["models"][k]["model"] = str(data["models"][k]["model"])
+
     j = json.dumps(data, indent=4)
     with open(args.output, 'w') as f:
         f.write(j)

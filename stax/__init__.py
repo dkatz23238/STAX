@@ -8,7 +8,8 @@ from pmdarima.pipeline import Pipeline
 from pmdarima.preprocessing import BoxCoxEndogTransformer
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 from sklearn.metrics import median_absolute_error
-from stax.models import train_arima, train_expsmoothing
+from stax.models import train_arima, train_expsmoothing, train_tbats
+from stax.tools import decompose_series, ACF, PACF
 
 
 def strftime(datetime):
@@ -48,35 +49,46 @@ class TimeSeries(object):
         self.train = series.iloc[:self.train_test_split]
         self.test = series.iloc[self.train_test_split:]
 
-        self.trained_models = {
+        self.experiment_results = {
             "meta": {
-                "train": {
-                    "values": self.train.values.tolist()
-                },
-                "test": {
-                    "values": self.test.values.tolist()
-                }
+                "train_test_split_index": self.train_test_split
             },
-            "models": {
-                "ARIMA": None,
-                "ExponentialSmoothing": None
-            }
+            "models": {}
+        }
+
+    def calculate_statistcs(self):
+        sd = "seasonal_decomposition"  #tidy
+        self.experiment_results[sd] = decompose_series(self)
+        self.experiment_results["autocorrelation"] = {
+            "ACF": ACF(self),
+            "PACF": PACF(self)
         }
 
     def train_models(self):
-        m1, p1, conf1, mape1 = train_arima(self)
+        # Arima models
+        m1, p1, conf1, metrics1 = train_arima(self)
 
-        m2, p2, conf2, mape2 = train_expsmoothing(self)
-        self.trained_models["models"]["ARIMA"] = {
-            "model": str(m1),
+        m2, p2, conf2, metrics2 = train_expsmoothing(self)
+
+        m3, p3, conf3, metrics3 = train_tbats(self)
+
+        self.experiment_results["models"]["ARIMA"] = {
+            "model": m1,
             "test_predictions": p1.tolist(),
             "test_confidence_intervals": conf1.tolist(),
-            "test_mean_absolute_percent_error": mape1
+            "metrics": metrics1
         }
 
-        self.trained_models["models"]["ExponentialSmoothing"] = {
-            "model": str(m2),
+        self.experiment_results["models"]["ExponentialSmoothing"] = {
+            "model": m2,
             "test_predictions": p2.tolist(),
             "test_confidence_intervals": conf2,
-            "test_mean_absolute_percent_error": mape2
+            "metrics": metrics2
+        }
+
+        self.experiment_results["models"]["TBATS"] = {
+            "model": m3,
+            "test_predictions": list(p3),
+            "test_confidence_intervals": list(conf3),
+            "metrics": metrics3
         }

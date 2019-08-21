@@ -19,7 +19,6 @@ def parse_month(x):
 
 df = pd.read_csv('shampoo-sales.csv')
 
-df.Sales = (df.Sales.astype(float) * 19.89) + 800
 df.Date = df.Date.apply(parse_month)
 df = df.set_index("Date")
 df = df.dropna()

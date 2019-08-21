@@ -1,13 +1,24 @@
 # STAX: Automated Time Series Forecasting Tool
 
+<p align="center">
+  <img width="800" alt="portfolio_view" src="images/logo.png">
+</p>
+
+
+
+# Command Line Interface
+
 ```
 python -m stax [-h] table column frequency output
 ```
-### Command Line Arguments
-- `table`:  refers to the csv file with the time series data
-- `column`:  which column to forecast
-- `frequency`:  daily or monthly data
-- `output`:  full directory for JSON results
+
+| Argument  | Definition |
+| ------------- | ------------- |
+| `table`  | The csv file with the time series data  |
+| `column`  | Which column to forecast  |
+| `frequency`  | Use daily or monthly data  |
+| `output`  | Full directory for JSON results  |
+
 
 # Example Output
 
