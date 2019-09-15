@@ -9,8 +9,7 @@ import datetime
 
 
 def check_series():
-    r = requests.get(
-        "https://devbox.crossentropy.solutions/api/series?token=6c11bffd")
+    r = requests.get("http://localhost:81/api/series?token=6c11bffd")
 
     assert r.status_code == 200
 
@@ -20,8 +19,7 @@ def check_series():
 
 
 def check_experiments():
-    r = requests.get(
-        "https://devbox.crossentropy.solutions/api/experiments?token=6c11bffd")
+    r = requests.get("http://localhost:81/api/experiments?token=6c11bffd")
 
     assert r.status_code == 200
 
@@ -86,9 +84,8 @@ def get_pending_experiment_ids():
 
 def insert_experiment_to_db(data):
     j = json.dumps(data)
-    r = requests.post(
-        "https://devbox.crossentropy.solutions/api/experiments?token=6c11bffd",
-        data=j)
+    r = requests.post("http://localhost:81/api/experiments?token=6c11bffd",
+                      data=j)
     return r
 
 
