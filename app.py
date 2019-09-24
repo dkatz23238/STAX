@@ -7,10 +7,13 @@ from stax import TimeSeries
 import pandas as pd
 import datetime
 
+import simplejson
+
+BACKEND_URL = os.environ["BACKEND_URL"]
+
 
 def check_series():
-    r = requests.get(
-        "https://devbox.crossentropy.solutions/api/series?token=6c11bffd")
+    r = requests.get(f"{BACKEND_URL}/api/series?token=6c11bffd")
 
     assert r.status_code == 200
 
@@ -20,8 +23,7 @@ def check_series():
 
 
 def check_experiments():
-    r = requests.get(
-        "https://devbox.crossentropy.solutions/api/experiments?token=6c11bffd")
+    r = requests.get(f"{BACKEND_URL}/api/experiments?token=6c11bffd")
 
     assert r.status_code == 200
 
@@ -85,22 +87,18 @@ def get_pending_experiment_ids():
 
 
 def insert_experiment_to_db(data):
-    j = json.dumps(data)
-    r = requests.post(
-        "https://devbox.crossentropy.solutions/api/experiments?token=6c11bffd",
-        data=j)
+    j = simplejson.dumps(data, ignore_nan=True)
+    r = requests.post(f"{BACKEND_URL}/api/experiments?token=6c11bffd", data=j)
     return r
 
 
 while True:
     print("Conducting insert check at %s" %
           datetime.datetime.now().isoformat())
-    db_check = conduct_db_check()
     pending = get_pending_experiment_ids()
-    print('Database check: %s' % db_check)
     print('Pending series to process: %s' % pending)
 
-    if db_check:
+    if len(pending) > 0:
         print("Conducting inserts at %s" % datetime.datetime.now().isoformat())
         for _id in pending:
             # Get the pending series from backend

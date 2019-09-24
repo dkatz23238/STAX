@@ -12,8 +12,15 @@ from stax.models import train_arima, train_expsmoothing, train_tbats
 from stax.tools import decompose_series, ACF, PACF
 
 
-def strftime(datetime):
-    return datetime.isoformat()
+def strftime(dt):
+    return dt.isoformat()
+
+
+def convert_confs(conf):
+    if conf is not None:
+        return [{"lower": i[0], "upper": i[1]} for i in conf]
+    else:
+        return None
 
 
 class TimeSeries(object):
@@ -67,15 +74,18 @@ class TimeSeries(object):
     def train_models(self):
         # Arima models
         m1, p1, conf1, metrics1 = train_arima(self)
+        conf1 = convert_confs(conf1)
 
         m2, p2, conf2, metrics2 = train_expsmoothing(self)
+        conf2 = convert_confs(conf2)
 
         m3, p3, conf3, metrics3 = train_tbats(self)
+        conf3 = convert_confs(conf3)
 
         self.experiment_results["models"]["ARIMA"] = {
             "model": m1,
             "test_predictions": p1.tolist(),
-            "test_confidence_intervals": conf1.tolist(),
+            "test_confidence_intervals": conf1,
             "metrics": metrics1
         }
 
