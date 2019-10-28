@@ -16,12 +16,27 @@ from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
 
 def decompose_series(ts):
-    d = seasonal_decompose(ts.series, two_sided=False)
-    result = {
-        "trend": list(d.trend),
-        "seasonal": list(d.seasonal),
-        "resid": list(d.resid)
-    }
+    additive = seasonal_decompose(ts.series, model="additive", two_sided=False)
+    multiplicative = seasonal_decompose(ts.series,
+                                        model="multiplicative",
+                                        two_sided=False)
+    add_res_mean = np.mean(additive.resid)
+    mul_res_mean = np.mean(multiplicative.resid)
+
+    if add_res_mean > mul_res_mean:
+
+        result = {
+            "trend": list(multiplicative.trend),
+            "seasonal": list(multiplicative.seasonal),
+            "resid": list(multiplicative.resid)
+        }
+    else:
+        result = {
+            "trend": list(additive.trend),
+            "seasonal": list(additive.seasonal),
+            "resid": list(additive.resid)
+        }
+
     return result
 
 

@@ -92,30 +92,45 @@ def insert_experiment_to_db(data):
     return r
 
 
-while True:
-    print("Conducting insert check at %s" %
-          datetime.datetime.now().isoformat())
-    pending = get_pending_experiment_ids()
-    print('Pending series to process: %s' % pending)
+RETRIES = 0
 
-    if len(pending) > 0:
-        print("Conducting inserts at %s" % datetime.datetime.now().isoformat())
-        for _id in pending:
-            # Get the pending series from backend
-            data = get_series(_id)
-            # Variable name
-            v_name = data["metadata"]["variable_name"].capitalize()
-            # Time series frequency
-            freq = data["metadata"]["frequency"]
-            # Convert to pandas.DataFrame
-            df = series_to_df(data)
-            # Convert to stax.TimeSeries
-            ts = run_analysis(df, v_name, freq)
-            # Get the result of analysis
-            result = convert_experiment_to_dict(ts.experiment_results, id=_id)
-            # Database insertion
-            r = insert_experiment_to_db(result)
-            assert r.status_code == 202
-            print(r)
-            print(_id)
-    time.sleep(30)
+while True:
+    try:
+        print("Conducting insert check at %s" %
+              datetime.datetime.now().isoformat())
+        pending = get_pending_experiment_ids()
+        print('Pending series to process: %s' % pending)
+
+        if len(pending) > 0:
+            print("Conducting inserts at %s" %
+                  datetime.datetime.now().isoformat())
+            for _id in pending:
+                # Get the pending series from backend
+                data = get_series(_id)
+                # Variable name
+                v_name = data["metadata"]["variable_name"].capitalize()
+                # Time series frequency
+                freq = data["metadata"]["frequency"]
+                # Convert to pandas.DataFrame
+                df = series_to_df(data)
+                # Convert to stax.TimeSeries
+                ts = run_analysis(df, v_name, freq)
+                # Get the result of analysis
+                result = convert_experiment_to_dict(ts.experiment_results,
+                                                    id=_id)
+                # Database insertion
+                r = insert_experiment_to_db(result)
+                assert r.status_code == 202
+                print(r)
+                print(_id)
+        time.sleep(30)
+    except Exception as e:
+        RETRIES += 1
+        print("ERROR")
+        print(e)
+
+        if RETRIES > 6:
+            raise Exception("Retry Maxed out! Exiting Application")
+
+        print("Trying again in 20 seconds")
+        time.sleep(20)

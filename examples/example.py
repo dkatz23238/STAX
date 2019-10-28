@@ -16,7 +16,7 @@ df = pd.read_csv('US-beer-sales.csv')
 df = df.set_index("Date")
 df.index = pd.to_datetime(df.index)
 # Select series of interest
-series = df.MillionDollars
+series = df.Sales
 # Build time series object
 ts = TimeSeries(series, "monthly", train_test_split=0.6)
 
