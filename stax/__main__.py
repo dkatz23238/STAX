@@ -39,7 +39,7 @@ if __name__ == "__main__":
     ts = TimeSeries(series, args.frequency, train_test_split=args.test_split)
 
     # Calculate statistics
-    ts.calculate_statistcs()
+    ts.calculate_statistics()
 
     # Train and select models
     ts.train_models()

@@ -45,4 +45,7 @@ def ACF(ts):
 
 
 def PACF(ts):
-    return list(pacf(ts.series))
+    try:
+        return list(pacf(ts.series, ))
+    except:
+        return [0]

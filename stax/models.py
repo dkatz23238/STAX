@@ -17,6 +17,8 @@ from tbats import TBATS
 # they are present, and finally a list of dicts containing
 # evaluation metrics
 
+# best_model, pred, conf, metrics
+
 
 def train_arima(ts):
     '''Returns the model, pred, conf, and metrics '''

@@ -1,5 +1,30 @@
 version: "2"
 services:
-  stax-core:
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+
+  stax-core-pullhook:
     build: .
     restart: always
+    entrypoint: ["python", "-u", "pull_hook.py"]
+    depends_on:
+      - redis
+      - stax-core-worker
+    ports:
+      - "5000:5000"
+    environment:
+      - STAX_BACKEND_URI=${STAX_BACKEND_URI}
+      - MONGO_DB_URI=${MONGO_DB_URI}
+      - REDIS_HOST=${REDIS_HOST}
+
+  stax-core-worker:
+    build: .
+    entrypoint: ["rq", "worker", "-u", "redis://redis:6379"]
+    depends_on:
+      - redis
+
+    environment:
+      - STAX_BACKEND_URI=${STAX_BACKEND_URI}
+      - REDIS_HOST=${REDIS_HOST}

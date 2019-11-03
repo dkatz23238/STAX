@@ -4,21 +4,18 @@
   <img width="800" alt="portfolio_view" src="images/logo.png">
 </p>
 
-
-
 # Command Line Interface
 
 ```
 python -m stax [-h] table column frequency output
 ```
 
-| Argument  | Definition |
-| ------------- | ------------- |
-| `table`  | The csv file with the time series data  |
-| `column`  | Which column to forecast  |
-| `frequency`  | Use daily or monthly data  |
-| `output`  | Full directory for JSON results  |
-
+| Argument    | Definition                             |
+| ----------- | -------------------------------------- |
+| `table`     | The csv file with the time series data |
+| `column`    | Which column to forecast               |
+| `frequency` | Use daily or monthly data              |
+| `output`    | Full directory for JSON results        |
 
 # Example Output
 
@@ -71,3 +68,9 @@ python -m stax [-h] table column frequency output
     }
 }
 ```
+
+# Webhook Server with Redis
+
+1. Run the redis server
+2. Spin up redis queue workers
+3. Start the webhook server

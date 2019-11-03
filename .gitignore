@@ -1,6 +1,7 @@
 # Mac
 .DS_Store
 
+.env
 
 # Git ignore
 .vscode/

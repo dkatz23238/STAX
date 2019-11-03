@@ -29,8 +29,8 @@ class TimeSeries(object):
         assert frequency in ["daily", "monthly", "quarterly"
                              ], "Frequency must be daily, monthly, or yearly"
 
-        assert series.index.dtype == np.dtype(
-            'datetime64[ns]'), "Provide date indexed series only"
+        assert type(
+            series.index) == pd.DatetimeIndex, "Provide only datetime index"
 
         assert type(
             series
@@ -63,7 +63,7 @@ class TimeSeries(object):
             "models": {}
         }
 
-    def calculate_statistcs(self):
+    def calculate_statistics(self):
         sd = "seasonal_decomposition"  #tidy
         self.experiment_results[sd] = decompose_series(self)
         self.experiment_results["autocorrelation"] = {

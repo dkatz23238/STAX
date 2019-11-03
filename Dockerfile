@@ -1,4 +1,4 @@
-FROM python:3.7-stretch
+FROM python:3.6-slim-stretch
 
 RUN apt-get update
 
@@ -8,4 +8,5 @@ RUN pip install -qr ./requirements.txt
 
 RUN ["python", "test.py"]
 # ENV BACKEND_URL="https://stax-backend.crossentropy.solutions"
-ENTRYPOINT [ "python", "-u", "app.py" ] 
+EXPOSE 5000
+ENTRYPOINT [ "python", "-u", "webhook.py" ] 

@@ -55,7 +55,7 @@ def run_analysis(df, column, frequency):
 
     series = df.set_index("Date")[column]
     ts = TimeSeries(series, frequency, 0.8)
-    ts.calculate_statistcs()
+    ts.calculate_statistics()
     # Train and select models
     ts.train_models()
     return ts
