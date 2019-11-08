@@ -16,6 +16,7 @@ db = client.get_database()
 
 experiments = db["experiments"]
 tokens = db["tokens"]
+enqueued_experiments = db["enqueued_experiments"]
 
 STAX_BACKEND_API = os.environ.get("STAX_BACKEND_URI")
 
@@ -39,9 +40,6 @@ def get_jobs(q):
     return jobs
 
 
-# Use Redis
-processed_ids = []
-
 while True:
     time.sleep(1)
 
@@ -53,7 +51,10 @@ while True:
         userUID = pending_experiments["userUID"]
         user_token = tokens.find_one({"userUID": userUID})["token"]
 
-        if _experiment in processed_ids:
+        experiment_check = list(
+            enqueued_experiments.find({"_experiment": _experiment}))
+
+        if len(experiment_check) > 0:
             pass
 
         else:
@@ -70,4 +71,5 @@ while True:
                 "job": job.id,
             }
             print(res)
-            processed_ids.append(_experiment)
+
+            enqueued_experiments.insert_one({"_experiment": _experiment})
