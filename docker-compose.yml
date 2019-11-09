@@ -8,7 +8,7 @@ services:
   stax-core-pullhook:
     build: .
     restart: always
-    entrypoint: ["python", "-u", "pull_hook.py"]
+    entrypoint: ["python", "-u", "pull_hook2.py"]
     depends_on:
       - redis
       - stax-core-worker
@@ -28,3 +28,14 @@ services:
     environment:
       - STAX_BACKEND_URI=${STAX_BACKEND_URI}
       - REDIS_HOST=${REDIS_HOST}
+
+  stax-experiments-watcher:
+    build: .
+    entrypoint: ["python", "-u", "completion_watcher.py"]
+    depends_on:
+      - redis
+
+    environment:
+      - STAX_BACKEND_URI=${STAX_BACKEND_URI}
+      - REDIS_HOST=${REDIS_HOST}
+      - MONGO_DB_URI=${MONGO_DB_URI}
