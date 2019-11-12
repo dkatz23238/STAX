@@ -12,16 +12,19 @@ from stax import TimeSeries, convert_confs, models
 TOKEN = "X8JUN8GP7H"
 
 STAX_BACKEND_API = "https://stax-rest-backend-v2-c2iwk3zleq-uc.a.run.app"
-HEADERS = {"X-Auth-Token": TOKEN, "content-type": "application/json"}
 
 
-def get_experiment(experiment_id):
+def get_experiment(experiment_id, user_token):
+    HEADERS = {"X-Auth-Token": user_token, "content-type": "application/json"}
+
     r = requests.get(f"{STAX_BACKEND_API}/api/experiments/{experiment_id}",
                      headers=HEADERS)
     return json.loads(r.content)
 
 
-def put_experiment(experiment_id, data):
+def put_experiment(experiment_id, data, user_token):
+    HEADERS = {"X-Auth-Token": user_token, "content-type": "application/json"}
+
     response = requests.put(
         f"{STAX_BACKEND_API}/api/experiments/{experiment_id}",
         headers=HEADERS,
@@ -37,8 +40,10 @@ def series_to_df(data):
     return df
 
 
-def train_model(series_id, experiment_id, model):
+def train_model(series_id, experiment_id, model, user_token):
     """Returns a dict"""
+    HEADERS = {"X-Auth-Token": user_token, "content-type": "application/json"}
+
     if not (model in ["TBATS", "ARIMA", "ETS"]):
         raise Exception("Only TBATS, ARIMA, or ETS")
 
@@ -57,7 +62,8 @@ def train_model(series_id, experiment_id, model):
     ts = TimeSeries(df, series["metadata"]["frequency"], 0.8)
 
     if model == "ARIMA":
-        best_model, pred, conf, metrics = models.train_arima(ts)
+        best_model, pred, conf, metrics, oos_pred, oos_conf = models.train_arima(
+            ts)
 
         d = {
             "model_name":
@@ -68,6 +74,10 @@ def train_model(series_id, experiment_id, model):
             list(pred),
             "test_confidence_intervals":
             convert_confs(conf),
+            "oos_predictions":
+            list(oos_pred),
+            "oos_confidence_intervals":
+            convert_confs(oos_conf),
             "mean_absolute_percent_error":
             metrics[0]["mean_absolute_percent_error"],
             "train_test_split_index":
@@ -75,7 +85,8 @@ def train_model(series_id, experiment_id, model):
         }
 
     elif model == "TBATS":
-        best_model, pred, conf, metrics = models.train_tbats(ts)
+        best_model, pred, conf, metrics, oos_pred, oos_conf = models.train_tbats(
+            ts)
 
         d = {
             "model_name":
@@ -86,6 +97,11 @@ def train_model(series_id, experiment_id, model):
             list(pred),
             "test_confidence_intervals":
             convert_confs(conf),
+            "oos_predictions":
+            list(oos_pred),
+            "oos_confidence_intervals":
+            convert_confs(zip(oos_conf["lower_bound"],
+                              oos_conf["upper_bound"])),
             "mean_absolute_percent_error":
             metrics[0]["mean_absolute_percent_error"],
             "train_test_split_index":
@@ -93,7 +109,8 @@ def train_model(series_id, experiment_id, model):
         }
 
     elif model == "ETS":
-        best_model, pred, conf, metrics = models.train_expsmoothing(ts)
+        best_model, pred, conf, metrics, oos_pred, oos_conf = models.train_expsmoothing(
+            ts)
 
         d = {
             "model_name":
@@ -104,6 +121,10 @@ def train_model(series_id, experiment_id, model):
             list(pred),
             "test_confidence_intervals":
             convert_confs(conf),
+            "oos_predictions":
+            list(oos_pred),
+            "oos_confidence_intervals":
+            convert_confs(oos_conf),
             "mean_absolute_percent_error":
             metrics[0]["mean_absolute_percent_error"],
             "train_test_split_index":
@@ -113,8 +134,10 @@ def train_model(series_id, experiment_id, model):
     return d
 
 
-def calculate_statistics(series_id, experiment_id):
+def calculate_statistics(series_id, experiment_id, user_token):
     """Returns a stax.TimeSeries"""
+    HEADERS = {"X-Auth-Token": user_token, "content-type": "application/json"}
+
     series_res = requests.get(f"{STAX_BACKEND_API}/api/series/{series_id}",
                               headers=HEADERS)
 
@@ -131,16 +154,18 @@ def calculate_statistics(series_id, experiment_id):
     return ts
 
 
-def post_model(data):
+def post_model(data, user_token):
     """Returns a requests.Response"""
+    HEADERS = {"X-Auth-Token": user_token, "content-type": "application/json"}
     post_request = requests.post(f"{STAX_BACKEND_API}/api/models",
                                  headers=HEADERS,
                                  data=simplejson.dumps(data))
     return post_request
 
 
-def post_decomp(ts, series_id, experiment_id):
+def post_decomp(ts, series_id, experiment_id, user_token):
     """Returns a requests.Response"""
+    HEADERS = {"X-Auth-Token": user_token, "content-type": "application/json"}
     decomp = ts.experiment_results["seasonal_decomposition"]
     decomp["_series"] = series_id
     decomp["method"] = "multiplicative"
@@ -152,8 +177,9 @@ def post_decomp(ts, series_id, experiment_id):
     return decomp_response
 
 
-def post_autocorr(ts, series_id, experiment_id):
+def post_autocorr(ts, series_id, experiment_id, user_token):
     """Returns a requests.Response"""
+    HEADERS = {"X-Auth-Token": user_token, "content-type": "application/json"}
     autocorr = ts.experiment_results["autocorrelation"]
     autocorr["_series"] = series_id
     autocorr_response = requests.post(
@@ -163,39 +189,39 @@ def post_autocorr(ts, series_id, experiment_id):
     return autocorr_response
 
 
-def run_arima_job(series_id, experiment_id):
+def run_arima_job(series_id, experiment_id, user_token):
     print(f"Running ARIMA Job at {datetime.datetime.now()}")
-    data = train_model(series_id, experiment_id, "ARIMA")
-    r = post_model(data)
+    data = train_model(series_id, experiment_id, "ARIMA", user_token)
+    r = post_model(data, user_token)
     response_data = json.loads(r.content)
     print(
         f"ARIMA Job Complete at {datetime.datetime.now()} with status code {r.status_code}"
     )
     # Update experiments
     print("Updating Experiments Data")
-    experiment_data = get_experiment(experiment_id)
+    experiment_data = get_experiment(experiment_id, user_token)
     experiment_data["_models"].append(response_data["_id"])
-    res = put_experiment(experiment_id, experiment_data)
+    res = put_experiment(experiment_id, experiment_data, user_token)
     print(f"Experiment Update compete with status code {res}")
     assert res.status_code == 200
     return {"model_response": r}
 
 
-def run_tbats_job(series_id, experiment_id):
+def run_tbats_job(series_id, experiment_id, user_token):
     """ Returns a dict"""
     print(f"Running TBATS Job at {datetime.datetime.now()}")
 
-    data = train_model(series_id, experiment_id, "TBATS")
+    data = train_model(series_id, experiment_id, "TBATS", user_token)
     print("TBATS DATA:")
     print(data)
-    r = post_model(data)
+    r = post_model(data, user_token)
     response_data = json.loads(r.content)
 
     # Update experiments
     print("Updating Experiments Data")
-    experiment_data = get_experiment(experiment_id)
+    experiment_data = get_experiment(experiment_id, user_token)
     experiment_data["_models"].append(response_data["_id"])
-    res = put_experiment(experiment_id, experiment_data)
+    res = put_experiment(experiment_id, experiment_data, user_token)
     print(f"Experiment Update compete with status code {res}")
     assert res.status_code == 200
 
@@ -205,17 +231,17 @@ def run_tbats_job(series_id, experiment_id):
     return {"model_response": r}
 
 
-def run_ets_job(series_id, experiment_id):
+def run_ets_job(series_id, experiment_id, user_token):
     """ Returns a dict"""
     print(f"Running ETS Job at {datetime.datetime.now()}")
-    data = train_model(series_id, experiment_id, "ETS")
-    r = post_model(data)
+    data = train_model(series_id, experiment_id, "ETS", user_token)
+    r = post_model(data, user_token)
     response_data = json.loads(r.content)
     # Update experiments
     print("Updating Experiments Data")
-    experiment_data = get_experiment(experiment_id)
+    experiment_data = get_experiment(experiment_id, user_token)
     experiment_data["_models"].append(response_data["_id"])
-    res = put_experiment(experiment_id, experiment_data)
+    res = put_experiment(experiment_id, experiment_data, user_token)
     print(f"Experiment Update compete with status code {res}")
     assert res.status_code == 200
 
@@ -225,13 +251,13 @@ def run_ets_job(series_id, experiment_id):
     return {"model_response": r}
 
 
-def run_statistics_job(series_id, experiment_id):
+def run_statistics_job(series_id, experiment_id, user_token):
     """ Returns a dict"""
     print(f"Running Statistics Job at {datetime.datetime.now()}")
-    ts = calculate_statistics(series_id, experiment_id)
+    ts = calculate_statistics(series_id, experiment_id, user_token)
 
-    decomp_response = post_decomp(ts, series_id, experiment_id)
-    autocorr_response = post_autocorr(ts, series_id, experiment_id)
+    decomp_response = post_decomp(ts, series_id, experiment_id, user_token)
+    autocorr_response = post_autocorr(ts, series_id, experiment_id, user_token)
 
     decomp_data = json.loads(decomp_response.content)
     autocorr_data = json.loads(autocorr_response.content)
@@ -245,10 +271,10 @@ def run_statistics_job(series_id, experiment_id):
 
     # Update experiments
     print("Updating Experiments Data")
-    experiment_data = get_experiment(experiment_id)
+    experiment_data = get_experiment(experiment_id, user_token)
     experiment_data["_decomposition"] = decomp_id
     experiment_data["_autocorrelation"] = autocorr_id
-    res = put_experiment(experiment_id, experiment_data)
+    res = put_experiment(experiment_id, experiment_data, user_token)
     print(f"Experiment Update compete with status code {res}")
     assert res.status_code == 200
 

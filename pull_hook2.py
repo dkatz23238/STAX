@@ -57,7 +57,8 @@ while True:
             for task in jobs_to_do:
                 print(f"Enqueuing Task {task}")
                 job = q.enqueue(task,
-                                args=(str(_series), str(_experiment)),
+                                args=(str(_series), str(_experiment),
+                                      str(user_token)),
                                 timeout=600)
 
             # Enqueue statistics

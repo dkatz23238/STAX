@@ -17,7 +17,7 @@ services:
     environment:
       - STAX_BACKEND_URI=${STAX_BACKEND_URI}
       - MONGO_DB_URI=${MONGO_DB_URI}
-      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_HOST=redis
 
   stax-core-worker:
     build: .
@@ -27,7 +27,7 @@ services:
 
     environment:
       - STAX_BACKEND_URI=${STAX_BACKEND_URI}
-      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_HOST=redis
 
   stax-experiments-watcher:
     build: .
@@ -37,5 +37,5 @@ services:
 
     environment:
       - STAX_BACKEND_URI=${STAX_BACKEND_URI}
-      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_HOST=redis
       - MONGO_DB_URI=${MONGO_DB_URI}

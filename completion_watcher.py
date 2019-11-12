@@ -11,6 +11,7 @@ import pymongo
 
 MONGO_DB_URI = os.environ.get("MONGO_DB_URI")
 STAX_BACKEND_API = os.environ.get("STAX_BACKEND_URI")
+TOKEN = ""
 
 HEADERS = {
     "X-Auth-Token": os.environ.get("BACKEND_AUTH_TOKEN"),
@@ -28,20 +29,27 @@ tokens = db["tokens"]
 enqueued_experiments = db["enqueued_experiments"]
 
 while True:
-    for experiment in experiments.find({"status": "pending"}):
+    query = experiments.find({"status": "pending"})
+    for experiment in query:
         try:
             if ((len(experiment["_models"]) == 3) &
                 (experiment["_decomposition"] is not None) &
                 (experiment["_autocorrelation"] is not None)):
 
+                _experiment = experiment["_id"]
+
+                userUID = experiment["userUID"]
+                user_token = tokens.find_one({"userUID": userUID})["token"]
+
                 print("Updating Experiments Data")
-                experiment_data = get_experiment(experiment["_id"])
+                experiment_data = get_experiment(experiment["_id"], user_token)
                 experiment_data["status"] = "complete"
-                res = put_experiment(experiment["_id"], experiment_data)
+                res = put_experiment(experiment["_id"], experiment_data,
+                                     user_token)
                 print(f"Experiment Update compete with status code {res}")
                 assert res.status_code == 200
-        except:
-            print(
-                "An Error occured. Experiment might not be ready. Sleeping for 10 seconds."
-            )
-    time.sleep(10)
+        except Exception as e:
+            print("error occured")
+            print(e)
+
+    time.sleep(5)

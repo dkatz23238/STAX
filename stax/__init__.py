@@ -73,13 +73,14 @@ class TimeSeries(object):
 
     def train_models(self):
         # Arima models
-        m1, p1, conf1, metrics1 = train_arima(self)
+        m1, p1, conf1, metrics1, oos_pred1, oos_conf1 = train_arima(self)
         conf1 = convert_confs(conf1)
 
-        m2, p2, conf2, metrics2 = train_expsmoothing(self)
+        m2, p2, conf2, metrics2, oos_pred2, oos_conf2 = train_expsmoothing(
+            self)
         conf2 = convert_confs(conf2)
 
-        m3, p3, conf3, metrics3 = train_tbats(self)
+        m3, p3, conf3, metrics3, oos_pred2, oos_conf2 = train_tbats(self)
         conf3 = convert_confs(conf3)
 
         self.experiment_results["models"]["ARIMA"] = {

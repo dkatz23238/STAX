@@ -67,7 +67,12 @@ def train_arima(ts):
 
     pred, conf = stepwise_fit.predict(horizon, return_conf_int=True)
     metrics = [{"mean_absolute_percent_error": MAPE}]
-    return stepwise_fit, pred, conf, metrics
+
+    stepwise_fit.update(ts.test)
+
+    OOS_pred, OOS_conf = stepwise_fit.predict(12, return_conf_int=True)
+
+    return stepwise_fit, pred, conf, metrics, OOS_pred, OOS_conf
 
 
 def train_expsmoothing(ts):
@@ -104,11 +109,18 @@ def train_expsmoothing(ts):
 
     pred = best_model.predict(start=ts.train_test_split,
                               end=ts.train_test_split + ts.test.shape[0] - 1)
+
+    OOS_pred = ExponentialSmoothing(
+        ts.series,
+        trend=best_model.model.trend,
+        seasonal=best_model.model.seasonal,
+        seasonal_periods=ts.seasonal_N).fit().forecast(steps=12)
+
     mabe = mean_absolute_error(ts.test, pred)
     MAPE = np.round(mabe / ts.test.mean(), 4)
 
     metrics = [{"mean_absolute_percent_error": MAPE}]
-    return best_model, pred, None, metrics
+    return best_model, pred, None, metrics, OOS_pred, None
 
 
 def train_tbats(ts):
@@ -152,4 +164,12 @@ def train_tbats(ts):
     conf = best_results["conf"]
     metrics = [{"mean_absolute_percent_error": best_results["mape"]}]
 
-    return model, pred, conf, metrics
+    # Get OOS forecasts for the future
+
+    estimator = TBATS(
+        use_box_cox=best_results["parameters"]["use_box_cox"],
+        use_arma_errors=best_results["parameters"]["use_arma_errors"],
+        seasonal_periods=best_results["parameters"]["seasonal_period"])
+    oos_model = estimator.fit(ts.series)
+    OOS_pred, OOS_conf = oos_model.forecast(steps=12, confidence_level=0.95)
+    return model, pred, conf, metrics, OOS_pred, OOS_conf
