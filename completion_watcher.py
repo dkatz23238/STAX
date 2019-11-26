@@ -42,14 +42,14 @@ while True:
                 user_token = tokens.find_one({"userUID": userUID})["token"]
 
                 print("Updating Experiments Data")
-                experiment_data = get_experiment(experiment["_id"], user_token)
+                experiment_data = {}
                 experiment_data["status"] = "complete"
                 res = put_experiment(experiment["_id"], experiment_data,
                                      user_token)
                 print(f"Experiment Update compete with status code {res}")
                 assert res.status_code == 200
         except Exception as e:
-            print("error occured")
+            print("Exception Handling... Not a big problem.")
             print(e)
 
     time.sleep(5)

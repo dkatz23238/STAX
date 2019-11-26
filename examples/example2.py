@@ -12,12 +12,12 @@ from statsmodels.tsa.stattools import acf, pacf
 from matplotlib.pyplot import cm
 
 # Read data
-df = pd.read_csv('data/US-beer-sales.csv')
+df = pd.read_csv('data/USDAProj_Corn_2007to2008.csv')
 # Make datetime index
 df = df.set_index("Date")
 df.index = pd.to_datetime(df.index)
 # Select series of interest
-series = df.Sales
+series = df["European Union Exports"]
 # Build time series object
 ts = TimeSeries(series, "monthly", train_test_split=0.8)
 ts.train_models()

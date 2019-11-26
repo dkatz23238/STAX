@@ -28,13 +28,15 @@ def decompose_series(ts):
         result = {
             "trend": list(multiplicative.trend),
             "seasonal": list(multiplicative.seasonal),
-            "resid": list(multiplicative.resid)
+            "resid": list(multiplicative.resid),
+            "method": "multiplicative"
         }
     else:
         result = {
             "trend": list(additive.trend),
             "seasonal": list(additive.seasonal),
-            "resid": list(additive.resid)
+            "resid": list(additive.resid),
+            "method": "additive"
         }
 
     return result

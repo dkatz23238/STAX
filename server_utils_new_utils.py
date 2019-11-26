@@ -9,9 +9,7 @@ import datetime
 
 from stax import TimeSeries, convert_confs, models
 
-TOKEN = "X8JUN8GP7H"
-
-STAX_BACKEND_API = "https://stax-rest-backend-v2-c2iwk3zleq-uc.a.run.app"
+STAX_BACKEND_API = os.environ.get("STAX_BACKEND_URI")
 
 
 def get_experiment(experiment_id, user_token):
@@ -168,7 +166,7 @@ def post_decomp(ts, series_id, experiment_id, user_token):
     HEADERS = {"X-Auth-Token": user_token, "content-type": "application/json"}
     decomp = ts.experiment_results["seasonal_decomposition"]
     decomp["_series"] = series_id
-    decomp["method"] = "multiplicative"
+    # decomp["method"] = "multiplicative"
 
     decomp_response = requests.post(f"{STAX_BACKEND_API}/api/decompositions",
                                     headers=HEADERS,
@@ -200,7 +198,14 @@ def run_arima_job(series_id, experiment_id, user_token):
     # Update experiments
     print("Updating Experiments Data")
     experiment_data = get_experiment(experiment_id, user_token)
+    experiment_data["_models"] = [i["_id"] for i in experiment_data["_models"]]
     experiment_data["_models"].append(response_data["_id"])
+
+    keys = list(experiment_data.keys())
+    for key in keys:
+        if key != "_models":
+            del experiment_data[key]
+
     res = put_experiment(experiment_id, experiment_data, user_token)
     print(f"Experiment Update compete with status code {res}")
     assert res.status_code == 200
@@ -220,7 +225,14 @@ def run_tbats_job(series_id, experiment_id, user_token):
     # Update experiments
     print("Updating Experiments Data")
     experiment_data = get_experiment(experiment_id, user_token)
+    experiment_data["_models"] = [i["_id"] for i in experiment_data["_models"]]
     experiment_data["_models"].append(response_data["_id"])
+
+    keys = list(experiment_data.keys())
+    for key in keys:
+        if key != "_models":
+            del experiment_data[key]
+
     res = put_experiment(experiment_id, experiment_data, user_token)
     print(f"Experiment Update compete with status code {res}")
     assert res.status_code == 200
@@ -240,7 +252,14 @@ def run_ets_job(series_id, experiment_id, user_token):
     # Update experiments
     print("Updating Experiments Data")
     experiment_data = get_experiment(experiment_id, user_token)
+    experiment_data["_models"] = [i["_id"] for i in experiment_data["_models"]]
     experiment_data["_models"].append(response_data["_id"])
+
+    keys = list(experiment_data.keys())
+    for key in keys:
+        if key != "_models":
+            del experiment_data[key]
+
     res = put_experiment(experiment_id, experiment_data, user_token)
     print(f"Experiment Update compete with status code {res}")
     assert res.status_code == 200
@@ -259,6 +278,9 @@ def run_statistics_job(series_id, experiment_id, user_token):
     decomp_response = post_decomp(ts, series_id, experiment_id, user_token)
     autocorr_response = post_autocorr(ts, series_id, experiment_id, user_token)
 
+    assert decomp_response.status_code == 200
+    assert autocorr_response.status_code == 200
+
     decomp_data = json.loads(decomp_response.content)
     autocorr_data = json.loads(autocorr_response.content)
 
@@ -271,9 +293,12 @@ def run_statistics_job(series_id, experiment_id, user_token):
 
     # Update experiments
     print("Updating Experiments Data")
-    experiment_data = get_experiment(experiment_id, user_token)
-    experiment_data["_decomposition"] = decomp_id
-    experiment_data["_autocorrelation"] = autocorr_id
+
+    experiment_data = {
+        "_decomposition": decomp_id,
+        "_autocorrelation": autocorr_id
+    }
+
     res = put_experiment(experiment_id, experiment_data, user_token)
     print(f"Experiment Update compete with status code {res}")
     assert res.status_code == 200
