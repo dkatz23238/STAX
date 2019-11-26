@@ -31,7 +31,7 @@ enqueued_experiments = db["enqueued_experiments"]
 
 redis_conn = Redis(host=REDIS_HOST)
 q = Queue(connection=redis_conn,
-          default_timeout=600)  # no args implies the default queue
+          default_timeout=1200)  # no args implies the default queue
 
 while True:
     for pending_experiments in experiments.find({"status": "pending"}):
@@ -59,7 +59,7 @@ while True:
                 job = q.enqueue(task,
                                 args=(str(_series), str(_experiment),
                                       str(user_token)),
-                                timeout=600)
+                                timeout=1200)
 
             # Enqueue statistics
             enqueued_experiments.insert_one({"_experiment": str(_experiment)})
