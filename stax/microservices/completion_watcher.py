@@ -6,17 +6,12 @@ import requests
 from redis import Redis
 from rq import Queue
 
-from server_utils_new_utils import run_arima_job, run_ets_job, run_statistics_job, run_tbats_job, get_experiment, put_experiment
+from stax.microservices import run_arima_job, run_ets_job, run_statistics_job, run_tbats_job, get_experiment, put_experiment
 import pymongo
 
 MONGO_DB_URI = os.environ.get("MONGO_DB_URI")
 STAX_BACKEND_API = os.environ.get("STAX_BACKEND_URI")
 TOKEN = ""
-
-HEADERS = {
-    "X-Auth-Token": os.environ.get("BACKEND_AUTH_TOKEN"),
-    "content-type": "application/json"
-}
 
 REDIS_HOST = os.environ.get("REDIS_HOST")
 
@@ -32,6 +27,7 @@ while True:
     query = experiments.find({"status": "pending"})
     for experiment in query:
         try:
+            # Has the experiment completed successfully?
             if ((len(experiment["_models"]) == 3) &
                 (experiment["_decomposition"] is not None) &
                 (experiment["_autocorrelation"] is not None)):

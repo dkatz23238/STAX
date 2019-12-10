@@ -6,7 +6,7 @@ import requests
 from redis import Redis
 from rq import Queue
 
-from server_utils_new_utils import run_arima_job, run_ets_job, run_statistics_job, run_tbats_job
+from stax.microservices import run_arima_job, run_ets_job, run_statistics_job, run_tbats_job
 import pymongo
 
 MONGO_DB_URI = os.environ.get("MONGO_DB_URI")

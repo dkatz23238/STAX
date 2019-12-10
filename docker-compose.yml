@@ -5,13 +5,13 @@ services:
     ports:
       - "6379:6379"
 
-  stax-core-pullhook:
+  experiment-enqueuer:
     build: .
     restart: always
-    entrypoint: ["python", "-u", "pull_hook2.py"]
+    entrypoint: ["python", "-u" ,"-m", "stax.microservices.experiment_enqueuer"]
     depends_on:
       - redis
-      - stax-core-worker
+      - core-worker
     ports:
       - "5000:5000"
     environment:
@@ -19,22 +19,20 @@ services:
       - MONGO_DB_URI=${MONGO_DB_URI}
       - REDIS_HOST=redis
 
-  stax-core-worker:
+  core-worker:
     build: .
     entrypoint: ["rq", "worker", "-u", "redis://redis:6379"]
     depends_on:
       - redis
-
     environment:
       - STAX_BACKEND_URI=${STAX_BACKEND_URI}
       - REDIS_HOST=redis
 
-  stax-experiments-watcher:
+  completion-watcher:
     build: .
-    entrypoint: ["python", "-u", "completion_watcher.py"]
+    entrypoint: ["python", "-u" ,"-m", "stax.microservices.completion_watcher"]
     depends_on:
       - redis
-
     environment:
       - STAX_BACKEND_URI=${STAX_BACKEND_URI}
       - REDIS_HOST=redis
