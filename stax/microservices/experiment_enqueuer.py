@@ -10,65 +10,67 @@ from rq import Queue
 from stax.microservices import run_arima_job, run_ets_job, run_statistics_job, run_tbats_job
 import pymongo
 
-MONGO_DB_URI = os.environ.get("MONGO_DB_URI")
-STAX_BACKEND_API = os.environ.get("STAX_BACKEND_URI")
 
-HEADERS = {
-    "X-Auth-Token": os.environ.get("BACKEND_AUTH_TOKEN"),
-    "content-type": "application/json"
-}
+if __name__ == "__main__":
+    MONGO_DB_URI = os.environ.get("MONGO_DB_URI")
+    STAX_BACKEND_API = os.environ.get("STAX_BACKEND_URI")
 
-REDIS_HOST = os.environ.get("REDIS_HOST")
+    HEADERS = {
+        "X-Auth-Token": os.environ.get("BACKEND_AUTH_TOKEN"),
+        "content-type": "application/json"
+    }
 
-# Mongo stuff
-client = pymongo.MongoClient(MONGO_DB_URI)
-db = client.get_database()
+    REDIS_HOST = os.environ.get("REDIS_HOST")
 
-experiments = db["experiments"]
-tokens = db["tokens"]
-enqueued_experiments = db["enqueued_experiments"]
+    # Mongo stuff
+    client = pymongo.MongoClient(MONGO_DB_URI)
+    db = client.get_database()
 
-# Redis Stuff
+    experiments = db["experiments"]
+    tokens = db["tokens"]
+    enqueued_experiments = db["enqueued_experiments"]
 
-redis_conn = Redis(host=REDIS_HOST)
-q = Queue(connection=redis_conn,
-          default_timeout=1200)  # no args implies the default queue
+    # Redis Stuff
 
-while True:
-    for pending_experiments in experiments.find({"status": "pending"}):
-        # Post Job To Queue
-        _series = pending_experiments["_series"]
-        _experiment = pending_experiments["_id"]
+    redis_conn = Redis(host=REDIS_HOST)
+    q = Queue(connection=redis_conn,
+              default_timeout=1200)  # no args implies the default queue
 
-        userUID = pending_experiments["userUID"]
-        user_token = tokens.find_one({"userUID": userUID})["token"]
+    while True:
+        for pending_experiments in experiments.find({"status": "pending"}):
+            # Post Job To Queue
+            _series = pending_experiments["_series"]
+            _experiment = pending_experiments["_id"]
 
-        # Check if the experiment is not already enqueued
-        experiment_check = list(
-            enqueued_experiments.find({"_experiment": str(_experiment)}))
+            userUID = pending_experiments["userUID"]
+            user_token = tokens.find_one({"userUID": userUID})["token"]
 
-        # If the list is empty then enqueue the job
-        if len(experiment_check) == 0:
-            print(f"Enqueueing Jobs on {_experiment}")
+            # Check if the experiment is not already enqueued
+            experiment_check = list(
+                enqueued_experiments.find({"_experiment": str(_experiment)}))
 
-            # Jobs to queue
-            jobs_to_do = [
-                run_arima_job, run_ets_job, run_statistics_job, run_tbats_job
-            ]
+            # If the list is empty then enqueue the job
+            if len(experiment_check) == 0:
+                print(f"Enqueueing Jobs on {_experiment}")
 
-            enqueued_at = datetime.datetime.utcnow()
+                # Jobs to queue
+                jobs_to_do = [
+                    run_arima_job, run_ets_job, run_statistics_job, run_tbats_job
+                ]
 
-            for task in jobs_to_do:
-                # Enqueue to redis queue for worker to pick up
-                print(f"Enqueuing Task {task}")
-                job = q.enqueue(task,
-                                args=(str(_series), str(_experiment),
-                                      str(user_token)),
-                                timeout=1200)
+                enqueued_at = datetime.datetime.utcnow()
 
-            # Make sure the series is now in the enqueued collection.
-            enqueued_experiments.insert_one(
-                {"_experiment": str(_experiment), "enqueued_at": enqueued_at})
-            print("Enqueued Experiment Sent to DB")
+                for task in jobs_to_do:
+                    # Enqueue to redis queue for worker to pick up
+                    print(f"Enqueuing Task {task}")
+                    job = q.enqueue(task,
+                                    args=(str(_series), str(_experiment),
+                                          str(user_token)),
+                                    timeout=1200)
 
-        time.sleep(20)
+                # Make sure the series is now in the enqueued collection.
+                enqueued_experiments.insert_one(
+                    {"_experiment": str(_experiment), "enqueued_at": enqueued_at})
+                print("Enqueued Experiment Sent to DB")
+
+            time.sleep(20)
