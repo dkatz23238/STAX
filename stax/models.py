@@ -1,3 +1,12 @@
+"""Model training logic
+
+All functions called train_* return a tuple of the model,
+the predictions on test set, the confidence intervals if
+they are present, and finally a list of dicts containing
+evaluation metrics
+"""
+
+
 import datetime
 
 import matplotlib.pyplot as plt
@@ -12,16 +21,18 @@ from statsmodels.tsa.holtwinters import ExponentialSmoothing
 from sklearn.metrics import mean_absolute_error
 from tbats import TBATS
 
-# All functions called train_* return a tuple of the model,
-# the predictions on test set, the confidence intervals if
-# they are present, and finally a list of dicts containing
-# evaluation metrics
 
-# best_model, pred, conf, metrics
 
 
 def train_arima(ts):
-    '''Returns the model, pred, conf, and metrics '''
+    """Trains ARIMA model and returns model results.
+    
+    Args:
+      ts (stax.TimeSeries): Time series to train model on.
+    
+    Returns:
+      tuple: Model experiment results as `(model, test_pred, test_conf, test_metrics, OOS_pred, OOS_conf)`.
+    """
 
     if ts.seasonal_N == None:
         stepwise_fit = pm.auto_arima(
@@ -76,6 +87,15 @@ def train_arima(ts):
 
 
 def train_expsmoothing(ts):
+    """Trains ETS model and returns model results.
+    
+    Args:
+      ts (stax.TimeSeries): Time series to train model on.
+    
+    Returns:
+      tuple: Model experiment results as `(model, test_pred, None, test_metrics, OOS_pred, None)`.
+    """
+
     parameter_space = {
         "trend": ['add', 'mul'],
         "seasonal": ['add', 'mul'],
@@ -124,6 +144,15 @@ def train_expsmoothing(ts):
 
 
 def train_tbats(ts):
+    """Trains TBATS model and returns model results.
+    
+    Args:
+      ts (stax.TimeSeries): Time series to train model on.
+    
+    Returns:
+      tuple: Model experiment results as `(model, test_pred, test_conf, test_metrics, OOS_pred, OOS_conf)`.
+    """
+
     parameter_space = {
         "seasonal_period": [[6, 15], [12, 15], [6, 30], [12, 30]],
         "use_box_cox": [True, False],

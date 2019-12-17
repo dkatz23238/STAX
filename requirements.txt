@@ -12,3 +12,4 @@ redis
 rq
 pymongo
 dnspython
+sklearn

@@ -1,3 +1,6 @@
+"""
+Tools used to calculate statistics.
+"""
 import datetime
 
 import matplotlib.pyplot as plt
@@ -16,6 +19,17 @@ from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
 
 def decompose_series(ts):
+    """Decompose time series and select best method.
+
+    Will choose the method that minizes std of residuals.
+
+    Args:
+      ts (stax.TimeSeries): Time series to decompose.
+    
+    Returns:
+      dict: Dictionary containing decomposed trend, seasonal, and residual components.
+
+    """
     additive = seasonal_decompose(ts.series, model="additive", two_sided=False)
     multiplicative = seasonal_decompose(ts.series,
                                         model="multiplicative",
@@ -43,10 +57,12 @@ def decompose_series(ts):
 
 
 def ACF(ts):
+    """Calculates ACF for a stax.TimeSeries"""
     return list(acf(ts.series))
 
 
 def PACF(ts):
+    """Calculates PACF for a stax.TimeSeries"""
     try:
         return list(pacf(ts.series, ))
     except:

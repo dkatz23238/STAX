@@ -3,7 +3,7 @@ import subprocess
 import os
 
 sub_result = subprocess.call(
-    "python -m stax data/airline-passengers.csv Passengers monthly 0.8 result.json"
+    "python -m stax ../data/airline-passengers.csv Passengers monthly 0.8 result.json"
     .split(" "))
 
 result = json.loads(open("./result.json").read())

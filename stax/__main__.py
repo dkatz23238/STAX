@@ -1,3 +1,7 @@
+"""
+CLI Tool.
+"""
+
 import argparse
 import pandas as pd
 from stax import TimeSeries

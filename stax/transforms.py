@@ -63,15 +63,3 @@ class BoxCoxTransform(TransformerMixin):
 
     def inverse_transform(self, X):
         return inv_boxcox(self.lmbda, X)
-
-
-# vals = np.abs(np.random.normal(size=40).cumsum())
-
-# bs = BackshiftOperator()
-# logvals = np.log1p(vals)
-# transformed = bs.fit_transform(logvals)
-# original = np.exp(bs.inverse_transform(transformed))-1
-
-# bx = BoxCoxTransform()
-# coxed = bx.fit_transform(vals)
-# original = bx.inverse_transform(vals)

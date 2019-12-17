@@ -1,3 +1,7 @@
+"""
+Module for interacting with STAX backend.
+"""
+
 import json
 import os
 
@@ -13,6 +17,16 @@ STAX_BACKEND_API = os.environ.get("STAX_BACKEND_URI")
 
 
 def get_experiment(experiment_id, user_token):
+    """GETs an experiment from STAX backend.
+
+    Args:
+      experiment_id (str): Unique ID of experiment.
+      user_token (str): User authentication token.
+
+    Returns:
+      dict: Payload from server with experiment information.
+
+    """
     HEADERS = {"X-Auth-Token": user_token, "content-type": "application/json"}
 
     r = requests.get(f"{STAX_BACKEND_API}/api/experiments/{experiment_id}",
@@ -21,6 +35,19 @@ def get_experiment(experiment_id, user_token):
 
 
 def put_experiment(experiment_id, data, user_token):
+    """PUTs an experiment from STAX backend.
+
+    Used to update data on the server.
+
+    Args:
+      experiment_id (str): Unique ID of experiment.
+      data (dict): Dictionary of data to update for experiment.
+      user_token (str): User authentication token.
+
+    Returns:
+      dict: Payload from server with experiment PUT info.
+
+    """
     HEADERS = {"X-Auth-Token": user_token, "content-type": "application/json"}
 
     response = requests.put(
@@ -31,7 +58,7 @@ def put_experiment(experiment_id, data, user_token):
 
 
 def series_to_df(data):
-    """Returns a pandas.DataFrame"""
+    """Converts Series from STAX backend to a pandas.DataFrame"""
     df = pd.DataFrame(data["data"])
     df.columns = ["Date", data["metadata"]["variable_name"]]
     df["Date"] = pd.to_datetime(df["Date"])
@@ -39,7 +66,20 @@ def series_to_df(data):
 
 
 def train_model(series_id, experiment_id, model, user_token):
-    """Returns a dict"""
+    """GETs an experiment from backend and then trains a model on the data.
+
+    Used to distribute the training of time series models.
+
+    Args:
+      series_id (str): Unique ID of the time series.
+      experiment_id (str): Unique ID of experiment.
+      model (str): Which model to use. Can be TBATS, ARIMA, or ETS.
+      user_token (str): User authentication token.
+
+    Returns:
+      dict: Trained model data ready to PUT to server. Used to update an experiment in the backend.
+
+    """
     HEADERS = {"X-Auth-Token": user_token, "content-type": "application/json"}
 
     if not (model in ["TBATS", "ARIMA", "ETS"]):
@@ -133,7 +173,14 @@ def train_model(series_id, experiment_id, model, user_token):
 
 
 def calculate_statistics(series_id, experiment_id, user_token):
-    """Returns a stax.TimeSeries"""
+    """GET's a series and calculates series statistics.
+
+    Args:
+      series_id (str): Unique ID of the time series.
+      experiment_id (str): Unique ID of experiment being invoked.
+      user_token (str): User authentication token.
+
+    """
     HEADERS = {"X-Auth-Token": user_token, "content-type": "application/json"}
 
     series_res = requests.get(f"{STAX_BACKEND_API}/api/series/{series_id}",
@@ -153,7 +200,18 @@ def calculate_statistics(series_id, experiment_id, user_token):
 
 
 def post_model(data, user_token):
-    """Returns a requests.Response"""
+    """POSTs a model to STAX backend.
+
+    Used to update data on the server.
+
+    Args:
+      data (dict): Data containing model results.
+      user_token (str): User authentication token.
+
+    Returns:
+      requests.Response: Response from server.
+
+    """
     HEADERS = {"X-Auth-Token": user_token, "content-type": "application/json"}
     post_request = requests.post(f"{STAX_BACKEND_API}/api/models",
                                  headers=HEADERS,
@@ -162,7 +220,18 @@ def post_model(data, user_token):
 
 
 def post_decomp(ts, series_id, experiment_id, user_token):
-    """Returns a requests.Response"""
+    """POSTs decomposition to STAX backend.
+
+    Used to update data on the server.
+
+    Args:
+      data (dict): Data containing decomposition results.
+      user_token (str): User authentication token.
+
+    Returns:
+      requests.Response: Response from server.
+
+    """
     HEADERS = {"X-Auth-Token": user_token, "content-type": "application/json"}
     decomp = ts.experiment_results["seasonal_decomposition"]
     decomp["_series"] = series_id
@@ -176,7 +245,18 @@ def post_decomp(ts, series_id, experiment_id, user_token):
 
 
 def post_autocorr(ts, series_id, experiment_id, user_token):
-    """Returns a requests.Response"""
+    """POSTs a ACF/PACF to STAX backend.
+
+    Used to update data on the server.
+
+    Args:
+      data (dict): Data containing ACF/PACF results.
+      user_token (str): User authentication token.
+
+    Returns:
+      requests.Response: Response from server.
+
+    """
     HEADERS = {"X-Auth-Token": user_token, "content-type": "application/json"}
     autocorr = ts.experiment_results["autocorrelation"]
     autocorr["_series"] = series_id
@@ -188,6 +268,20 @@ def post_autocorr(ts, series_id, experiment_id, user_token):
 
 
 def run_arima_job(series_id, experiment_id, user_token):
+    """Runs ARIMA job on redis queue.
+
+    Used to distribute work in rq.
+
+    Args:
+      series_id (str): Unique series ID.
+      experiment_id (str): Unique experiment ID.
+      user_token (str): User token that is invoking experiment request.
+
+
+    Returns:
+      dict: Dictionary containing request.Reponse objects.
+
+    """
     print(f"Running ARIMA Job at {datetime.datetime.now()}")
     data = train_model(series_id, experiment_id, "ARIMA", user_token)
     r = post_model(data, user_token)
@@ -213,6 +307,20 @@ def run_arima_job(series_id, experiment_id, user_token):
 
 
 def run_tbats_job(series_id, experiment_id, user_token):
+    """Runs TBATS job on redis queue.
+
+    Used to distribute work in rq.
+
+    Args:
+      series_id (str): Unique series ID.
+      experiment_id (str): Unique experiment ID.
+      user_token (str): User token that is invoking experiment request.
+
+
+    Returns:
+      dict: Dictionary containing request.Reponse objects.
+
+    """
     """ Returns a dict"""
     print(f"Running TBATS Job at {datetime.datetime.now()}")
 
@@ -244,7 +352,20 @@ def run_tbats_job(series_id, experiment_id, user_token):
 
 
 def run_ets_job(series_id, experiment_id, user_token):
-    """ Returns a dict"""
+    """Runs ETS job on redis queue.
+
+    Used to distribute work in rq.
+
+    Args:
+      series_id (str): Unique series ID.
+      experiment_id (str): Unique experiment ID.
+      user_token (str): User token that is invoking experiment request.
+
+
+    Returns:
+      dict: Dictionary containing request.Reponse objects.
+
+    """
     print(f"Running ETS Job at {datetime.datetime.now()}")
     data = train_model(series_id, experiment_id, "ETS", user_token)
     r = post_model(data, user_token)
@@ -271,7 +392,20 @@ def run_ets_job(series_id, experiment_id, user_token):
 
 
 def run_statistics_job(series_id, experiment_id, user_token):
-    """ Returns a dict"""
+    """Runs statistic job on redis queue.
+
+    Used to distribute work in rq.
+
+    Args:
+      series_id (str): Unique series ID.
+      experiment_id (str): Unique experiment ID.
+      user_token (str): User token that is invoking experiment request.
+
+
+    Returns:
+      dict: Dictionary containing request.Reponse objects.
+
+    """
     print(f"Running Statistics Job at {datetime.datetime.now()}")
     ts = calculate_statistics(series_id, experiment_id, user_token)
 

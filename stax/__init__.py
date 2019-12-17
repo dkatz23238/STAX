@@ -13,10 +13,30 @@ from stax.tools import decompose_series, ACF, PACF
 
 
 def strftime(dt):
+    """Formats a datetime.datetime object as ISO-86001 string.
+    
+    Args:
+      dt (datetime.datetime): The datetime object to format as string.
+
+    Returns:
+      str: IS0 formated string.    
+    
+    """
     return dt.isoformat()
 
 
 def convert_confs(conf):
+    """ Converts list of tuples into list of dictionaries.
+
+    Used to convert a list of confidence interval predictions into a more usable format.
+
+    Args:
+      conf (list): List of tuples where the zeroth element is the lower and the first is the upper confidence interval.
+    
+    Returns:
+      list: List of dictionary containing upper and lower keys explicitly.
+
+    """
     if conf is not None:
         return [{"lower": i[0], "upper": i[1]} for i in conf]
     else:
@@ -25,6 +45,14 @@ def convert_confs(conf):
 
 class TimeSeries(object):
     def __init__(self, series, frequency, train_test_split=0.9):
+        """ Class to represent and run operations on your time series data.
+
+        Args:
+          series (pandas.Series): Sorted and date-indexed data to perform run experiments on.
+          frequency (str): Frequency of data. Monthly only fo the time being.
+          train_test_split (:obj:`float`, optional): Index to split time series into train and test.
+        
+        """
         # Asserts
         assert frequency in ["daily", "monthly", "quarterly"
                              ], "Frequency must be daily, monthly, or yearly"
@@ -39,6 +67,7 @@ class TimeSeries(object):
         assert series.sum(
         ), "Only numeric data is allowed in time series object"
 
+        #: pandas.Series: Time series data from __init__
         self.series = series
         self.frequency = frequency
 
@@ -53,9 +82,11 @@ class TimeSeries(object):
             self.seasonal_N = None
 
         self.train_test_split = round(series.shape[0] * train_test_split)
+        #: Train set
         self.train = series.iloc[:self.train_test_split]
+        #: Test set
         self.test = series.iloc[self.train_test_split:]
-
+        #: dictionary: Store for final results
         self.experiment_results = {
             "meta": {
                 "train_test_split_index": self.train_test_split
@@ -64,6 +95,8 @@ class TimeSeries(object):
         }
 
     def calculate_statistics(self):
+        """Calculates statistics not related to the predictive models.
+        """
         sd = "seasonal_decomposition"  #tidy
         self.experiment_results[sd] = decompose_series(self)
         self.experiment_results["autocorrelation"] = {
@@ -72,6 +105,7 @@ class TimeSeries(object):
         }
 
     def train_models(self):
+        """Trains differnt TS models and stores corresponding to `self.experiment_results`"""
         # Arima models
         m1, p1, conf1, metrics1, oos_pred1, oos_conf1 = train_arima(self)
         conf1 = convert_confs(conf1)

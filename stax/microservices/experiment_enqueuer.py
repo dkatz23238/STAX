@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import datetime
 
 import requests
 from redis import Redis
@@ -42,27 +43,32 @@ while True:
         userUID = pending_experiments["userUID"]
         user_token = tokens.find_one({"userUID": userUID})["token"]
 
+        # Check if the experiment is not already enqueued
         experiment_check = list(
             enqueued_experiments.find({"_experiment": str(_experiment)}))
 
-        print(experiment_check)
-
+        # If the list is empty then enqueue the job
         if len(experiment_check) == 0:
-            # Enqueue Jobs
             print(f"Enqueueing Jobs on {_experiment}")
+
+            # Jobs to queue
             jobs_to_do = [
                 run_arima_job, run_ets_job, run_statistics_job, run_tbats_job
             ]
 
+            enqueued_at = datetime.datetime.utcnow()
+
             for task in jobs_to_do:
+                # Enqueue to redis queue for worker to pick up
                 print(f"Enqueuing Task {task}")
                 job = q.enqueue(task,
                                 args=(str(_series), str(_experiment),
                                       str(user_token)),
                                 timeout=1200)
 
-            # Enqueue statistics
-            enqueued_experiments.insert_one({"_experiment": str(_experiment)})
+            # Make sure the series is now in the enqueued collection.
+            enqueued_experiments.insert_one(
+                {"_experiment": str(_experiment), "enqueued_at": enqueued_at})
             print("Enqueued Experiment Sent to DB")
 
         time.sleep(20)
