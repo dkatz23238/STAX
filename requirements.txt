@@ -13,3 +13,4 @@ rq
 pymongo
 dnspython
 sklearn
+pytest

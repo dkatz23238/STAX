@@ -4,9 +4,10 @@ RUN apt-get update
 
 WORKDIR /root
 COPY ./ ./
-RUN pip install -qr ./requirements.txt
+RUN pip install -qr ./requirements.txt && python setup.py develop
 
-# RUN ["python", "test.py"]
-# ENV BACKEND_URL="https://stax-backend.crossentropy.solutions"
+RUN cd tests && pytest unit_tests.py && cd /root
+
 EXPOSE 5000
 ENTRYPOINT [ "python", "-u","-m", "stax.microservices.experiment_enqueuer" ] 
+
