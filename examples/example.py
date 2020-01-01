@@ -26,7 +26,7 @@ color = iter(cm.rainbow(np.linspace(0, 1, 7)))
 results = ts.experiment_results
 # series.plot()
 split = results["meta"]["train_test_split_index"]
-plt.title("Amazing Visualization")
+plt.title("US Beer Sales Model Evaluation")
 c = next(color)
 plt.plot(series.index[:split], series.values[:split], c=c, alpha=0.4)
 for model in results["models"]:

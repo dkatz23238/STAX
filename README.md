@@ -4,6 +4,12 @@
   <img width="800" alt="portfolio_view" src="images/logo.png">
 </p>
 
+# Install
+
+```
+python setup.py install
+```
+
 # Command Line Interface
 
 ```
@@ -16,6 +22,32 @@ python -m stax [-h] table column frequency output
 | `column`    | Which column to forecast               |
 | `frequency` | Use daily or monthly data              |
 | `output`    | Full directory for JSON results        |
+
+### Example Command
+
+```sh
+python -m stax ./data/airline-passengers.csv Passengers monthly airline-passengers-result.json
+```
+
+# Example Results
+
+You can call `python -m stax.plot` on a json result file to create matplotlib visualizations.
+
+<p align="center">
+  <img  alt="portfolio_view" src="images/beer-sales.png">
+</p>
+
+<p align="center">
+  <img  alt="portfolio_view" src="images/employment.png">
+</p>
+
+<p align="center">
+  <img  alt="portfolio_view" src="images/passengers.png">
+</p>
+
+<p align="center">
+  <img  alt="portfolio_view" src="images/shampoo-sales.png">
+</p>
 
 # Example Output
 
